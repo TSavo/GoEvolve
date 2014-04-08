@@ -1,7 +1,6 @@
 package solve
 
 import (
-	"github.com/tsavo/golightly/intutil"
 	"github.com/tsavo/golightly/vm"
 	"strings"
 )
@@ -60,7 +59,7 @@ func (breeder RandomBreeder) Breed([]string) []string {
 	for x := 0; x < breeder.PopulationSize; x++ {
 		p := ""
 		for y := 0; y < breeder.ProgramLength; y++ {
-			p += breeder.RandomOperation().String() + "\n"
+			p += breeder.Encode(&vm.Memory{rng.Int(), rng.Int(), rng.Int()}).String() + "\n"
 		}
 		progs[x] = p
 	}
@@ -86,9 +85,9 @@ func (breeder CrossoverBreeder) Breed(seeds []string) []string {
 
 		l1 := len(prog1)
 		l2 := len(prog2)
-		prog := make([]string, intutil.Max(l1, l2))
-		split := rng.Int() % intutil.Min(l1, l2)
-		endSplit := (rng.Int()%intutil.Min(l1, l2) - split) + split
+		prog := make([]string, Max(l1, l2))
+		split := rng.Int() % Min(l1, l2)
+		endSplit := (rng.Int()%Min(l1, l2) - split) + split
 		for x := 0; x < len(prog); x++ {
 			if x > len(prog1)-1 || (x < endSplit && x >= split && x < len(prog2)) {
 				prog[x] = prog2[x]
@@ -126,7 +125,7 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 			if rng.Float64() < breeder.MutationChance {
 				if rng.Float64() < 0.1 {
 					for r := rng.Int() % 10; r < 10; r++ {
-						outProg = append(outProg, breeder.RandomOperation())
+						outProg = append(outProg, breeder.Encode(&vm.Memory{rng.Int(), rng.Int(), rng.Int()}))
 					}
 				}
 				if rng.Float64() < 0.1 && len(outProg) > 0 {
