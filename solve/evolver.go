@@ -36,6 +36,7 @@ func (self *IslandEvolver) AddPopulation(id int, heap *vm.Memory, registerSize i
 	breeders := Breeders(breeder, self.InfluxBreeder)
 	solver := NewSolver(id, heap, registerSize, is, term, breeders, eval, selector)
 	solver.SolverReportChan = self.SolverReportChan
+	go solver.SolveOneAtATime()
 }
 
 func (self *IslandEvolver) CollectBest() {

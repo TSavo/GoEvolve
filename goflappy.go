@@ -2,15 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
-	"net"
 	"net/http"
 	"os/user"
 	"strconv"
 	"time"
-
 	"github.com/gorilla/websocket"
 	"github.com/tsavo/golightly/vm"
 	"github.com/tsavo/gosolve/solve"
@@ -124,22 +121,6 @@ func DefineInstructions(flapChan chan bool) (i *vm.InstructionSet) {
 	})
 
 	return
-}
-
-func handleConnection(conn *net.Conn) {
-	for {
-		var one []byte
-		(*conn).SetReadDeadline(time.Now())
-		if _, err := (*conn).Read(one); err == io.EOF {
-			fmt.Println("Detected closed LAN connection")
-			(*conn).Close()
-			(*conn) = nil
-			break
-		} else {
-			//var zero time.Time
-			(*conn).SetReadDeadline(time.Time{})
-		}
-	}
 }
 
 type hub struct {
@@ -309,7 +290,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 			heap.Set(5, myX)
 			heap.Set(6, y)
 			heap.Set(7, center)
-			rew := 1000-myX
+			rew := 1000 - myX
 			if rew < 0 {
 				rew *= -1
 			}
@@ -331,30 +312,12 @@ func loadProgram(projectName string, id int) vm.Program {
 var FlappyIsland *solve.IslandEvolver
 
 func main() {
-	//loadProgram("", 0)
-
-	go h.run()
 	FlappyIsland = solve.NewIslandEvolver(3)
+	go h.run()
 	go func() {
 		http.HandleFunc("/ws", wsHandler)
 		if err := http.ListenAndServe(":3000", nil); err != nil {
 			fmt.Println("ListenAndServe:", err)
-		}
-	}()
-
-	go func() {
-		ln, err := net.Listen("tcp", ":8080")
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		for {
-			conn, err := ln.Accept()
-			if err != nil {
-				// handle error
-				continue
-			}
-			go handleConnection(&conn)
 		}
 	}()
 

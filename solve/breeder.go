@@ -11,7 +11,7 @@ type Breeder interface {
 
 type MultiBreeder []Breeder
 
-func Breeders(breeders... Breeder) *MultiBreeder {
+func Breeders(breeders ...Breeder) *MultiBreeder {
 	out := MultiBreeder(breeders)
 	return &out
 }
@@ -59,7 +59,7 @@ func (breeder RandomBreeder) Breed([]string) []string {
 	for x := 0; x < breeder.PopulationSize; x++ {
 		p := ""
 		for y := 0; y < breeder.ProgramLength; y++ {
-			p += breeder.Encode(&vm.Memory{rng.Int(), rng.Int(), rng.Int()}).String() + "\n"
+			p += breeder.Encode(&vm.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt()}).String() + "\n"
 		}
 		progs[x] = p
 	}
@@ -125,7 +125,7 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 			if rng.Float64() < breeder.MutationChance {
 				if rng.Float64() < 0.1 {
 					for r := rng.Int() % 10; r < 10; r++ {
-						outProg = append(outProg, breeder.Encode(&vm.Memory{rng.Int(), rng.Int(), rng.Int()}))
+						outProg = append(outProg, breeder.Encode(&vm.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt()}))
 					}
 				}
 				if rng.Float64() < 0.1 && len(outProg) > 0 {
@@ -136,10 +136,10 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 					decode.Set(0, rng.Int())
 				}
 				if rng.Float64() < 0.5 {
-					decode.Set(1, rng.Int())
+					decode.Set(1, rng.SmallInt())
 				}
 				if rng.Float64() < 0.5 {
-					decode.Set(2, rng.Int())
+					decode.Set(2, rng.SmallInt())
 				}
 				outProg = append(outProg, breeder.Encode(decode))
 			} else {

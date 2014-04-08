@@ -4,6 +4,7 @@ import (
 	"github.com/seehuhn/mt19937"
 	"math"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -17,12 +18,47 @@ const (
 	MinInt64 = int64(math.MinInt64)
 )
 
+type SafeRNG struct {
+	rng *rand.Rand
+}
+
 var (
-	rng = rand.New(mt19937.New())
+	rng  SafeRNG
+	lock sync.Mutex
 )
 
 func init() {
-	rng.Seed(time.Now().UnixNano())
+	rng = SafeRNG{rand.New(mt19937.New())}
+	rng.rng.Seed(time.Now().UnixNano())
+	lock = sync.Mutex{}
+}
+
+func (rng *SafeRNG) Int() int {
+	lock.Lock()
+	defer lock.Unlock()
+	return rng.rng.Int()
+}
+
+func (rng *SafeRNG) Int63() int64 {
+	lock.Lock()
+	defer lock.Unlock()
+	return rng.rng.Int63()
+}
+
+func (rng *SafeRNG) Float64() float64 {
+	lock.Lock()
+	defer lock.Unlock()
+	return rng.rng.Float64()
+}
+
+func (rng *SafeRNG) SmallInt() int {
+	lock.Lock()
+	defer lock.Unlock()
+	x := rng.rng.Intn(10000)
+	if rng.rng.Float64() < 0.5 {
+		x *= -1
+	}
+	return x
 }
 
 func Max8(left, right int8) int8 {
@@ -97,7 +133,7 @@ func Abs(x int) int {
 	case x > MinInt:
 		return -x
 	}
-	panic("math/int.Abs: invalid argument")
+	panic("Abs: invalid argument")
 
 }
 
@@ -109,7 +145,7 @@ func Abs32(x int32) int32 {
 	case x > MinInt32:
 		return -x
 	}
-	panic("math/int.Abs32: invalid argument")
+	panic("Abs32: invalid argument")
 
 }
 
@@ -121,5 +157,5 @@ func Abs64(x int64) int64 {
 	case x > MinInt64:
 		return -x
 	}
-	panic("math/int.Abs64: invalid argument")
+	panic("Abs64: invalid argument")
 }
