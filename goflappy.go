@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/websocket"
+	"github.com/tsavo/golightly/vm"
+	"github.com/tsavo/gosolve/solve"
 	"log"
 	"math/rand"
 	"net/http"
 	"os/user"
 	"strconv"
 	"time"
-	"github.com/gorilla/websocket"
-	"github.com/tsavo/golightly/vm"
-	"github.com/tsavo/gosolve/solve"
 )
 
 const (
@@ -109,7 +109,6 @@ func DefineInstructions(flapChan chan bool) (i *vm.InstructionSet) {
 		p.Registers.Set((*m).Get(0), p.Registers.Get((*m).Get(0))+p.Registers.Get((*m).Get(1)))
 	})
 	i.Operator("subtract", func(p *vm.ProcessorCore, m *vm.Memory) {
-		//fmt.Println(p.Registers.Get((*m).Get(0))-p.Registers.Get((*m).Get(1)))
 		p.Registers.Set((*m).Get(0), p.Registers.Get((*m).Get(0))-p.Registers.Get((*m).Get(1)))
 	})
 	i.Operator("flap", func(p *vm.ProcessorCore, m *vm.Memory) {
@@ -240,9 +239,8 @@ func GenerateProgram() string {
 	return pr
 }
 
-var id = 0
 var populationInfluxChan solve.InfluxBreeder = make(solve.InfluxBreeder, 100)
-var SolverReportChan chan *solve.SolverReport = make(chan *solve.SolverReport, 100)
+var PopulationReportChan chan *solve.PopulationReport = make(chan *solve.PopulationReport, 100)
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
@@ -264,8 +262,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	breeder := *solve.Breeders(solve.NewCopyBreeder(15), FlappyBreeder{10}, solve.NewRandomBreeder(25, 50, is), solve.NewMutationBreeder(25, 0.1, is), solve.NewCrossoverBreeder(25))
 	flappyEval := new(FlappyEvaluator)
 	selector := solve.AndSelect(solve.TopX(10), solve.Tournament(10))
-	FlappyIsland.AddPopulation(id, &heap, 4, is, terminationCondition, breeder, flappyEval, selector)
-	id++
+	FlappyIsland.AddPopulation(&heap, 4, is, terminationCondition, breeder, flappyEval, selector)
 	go func() {
 		for {
 			<-outChan
@@ -320,6 +317,5 @@ func main() {
 			fmt.Println("ListenAndServe:", err)
 		}
 	}()
-
 	<-make(chan int)
 }

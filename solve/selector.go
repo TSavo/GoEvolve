@@ -55,7 +55,7 @@ func TopX(keep int) *TopXSelector {
 
 func (topx TopXSelector) Select(s *SolutionList) *SolutionList {
 	sort.Sort(s)
-	x := (*s)[:topx.Keep % len(*s)]
+	x := (*s)[:topx.Keep%len(*s)]
 	return &x
 }
 
@@ -69,10 +69,7 @@ func NewStochasticUniversalSelector(keep int) *StochasticUniversalSelector {
 
 func (sel StochasticUniversalSelector) Select(s *SolutionList) *SolutionList {
 	sort.Sort(sort.Reverse(*s))
-	f := int64(0)
-	for _, x := range *s {
-		f += x.Reward
-	}
+	f := (*s)[len(*s)-1].Reward
 	n := sel.Keep
 	p := int(f / int64(n))
 	start := rng.Int()%p + 1

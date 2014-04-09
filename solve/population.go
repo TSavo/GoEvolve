@@ -6,7 +6,7 @@ import (
 	"github.com/tsavo/golightly/vm"
 )
 
-type Solver struct {
+type Population struct {
 	Id, RegisterLength   int
 	InstructionSet       *vm.InstructionSet
 	Breeder              *Breeder
@@ -14,7 +14,7 @@ type Solver struct {
 	Selector             *Selector
 	TerminationCondition *vm.TerminationCondition
 	ControlChan          chan bool
-	SolverReportChan     chan *SolverReport
+	PopulationReportChan chan *PopulationReport
 	Heap                 *vm.Memory
 }
 
@@ -33,7 +33,7 @@ func (sol *SolutionList) GetPrograms() []string {
 	return x
 }
 
-type SolverReport struct {
+type PopulationReport struct {
 	Id int
 	SolutionList
 }
@@ -42,11 +42,11 @@ func (s SolutionList) Len() int           { return len(s) }
 func (s SolutionList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s SolutionList) Less(i, j int) bool { return s[i].Reward > s[j].Reward }
 
-func NewSolver(id int, sharedMemory *vm.Memory, rl int, is *vm.InstructionSet, term vm.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Solver {
-	return &Solver{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *SolverReport, 1), sharedMemory}
+func NewPopulation(id int, sharedMemory *vm.Memory, rl int, is *vm.InstructionSet, term vm.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Population {
+	return &Population{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *PopulationReport, 1), sharedMemory}
 }
 
-func (s *Solver) SolveOneAtATime() {
+func (s *Population) Run() {
 	programs := (*s.Breeder).Breed(nil)
 	processors := make([]*vm.ProcessorCore, 0)
 	for {
@@ -71,7 +71,7 @@ func (s *Solver) SolveOneAtATime() {
 			solutions[x] = &Solution{(*s.Evaluator).Evaluate(pro), pro.Program.Decompile()}
 		}
 		select {
-		case s.SolverReportChan <- &SolverReport{s.Id, solutions}:
+		case s.PopulationReportChan <- &PopulationReport{s.Id, solutions}:
 		default:
 		}
 		programs = (*s.Breeder).Breed((*s.Selector).Select(&solutions).GetPrograms())

@@ -8,9 +8,10 @@ import (
 )
 
 type IslandEvolver struct {
-	ChampionSize     int
-	SolverReportChan chan *SolverReport
+	ChampionSize         int
+	PopulationReportChan chan *PopulationReport
 	InfluxBreeder
+	lastId int
 }
 
 type Champion struct {
@@ -27,28 +28,29 @@ func (s Champions) Less(i, j int) bool {
 }
 
 func NewIslandEvolver(champSize int) *IslandEvolver {
-	i := IslandEvolver{champSize, make(chan *SolverReport, 100), make(InfluxBreeder, 100)}
-	go i.CollectBest()
+	i := IslandEvolver{champSize, make(chan *PopulationReport, 100), make(InfluxBreeder, 100), 0}
+	go i.Interbreed()
 	return &i
 }
 
-func (self *IslandEvolver) AddPopulation(id int, heap *vm.Memory, registerSize int, is *vm.InstructionSet, term vm.TerminationCondition, breeder Breeder, eval Evaluator, selector Selector) {
+func (self *IslandEvolver) AddPopulation(heap *vm.Memory, registerSize int, is *vm.InstructionSet, term vm.TerminationCondition, breeder Breeder, eval Evaluator, selector Selector) {
 	breeders := Breeders(breeder, self.InfluxBreeder)
-	solver := NewSolver(id, heap, registerSize, is, term, breeders, eval, selector)
-	solver.SolverReportChan = self.SolverReportChan
-	go solver.SolveOneAtATime()
+	population := NewPopulation(self.lastId, heap, registerSize, is, term, breeders, eval, selector)
+	population.PopulationReportChan = self.PopulationReportChan
+	go population.Run()
+	self.lastId++
 }
 
-func (self *IslandEvolver) CollectBest() {
+func (self *IslandEvolver) Interbreed() {
 	for {
 		best := make(Champions, self.ChampionSize)
 		for x := 0; x < self.ChampionSize; x++ {
 			runtime.Gosched()
-			solverReport := <- self.SolverReportChan
-			sort.Sort(solverReport)
-			champ := Champion{solverReport.SolutionList[0].Reward, make([]string, len(solverReport.SolutionList))}
-			for y := 0; y < len(solverReport.SolutionList); y++ {
-				champ.Programs[y] = solverReport.SolutionList[y].Program
+			populationReport := <-self.PopulationReportChan
+			sort.Sort(populationReport)
+			champ := Champion{populationReport.SolutionList[0].Reward, make([]string, len(populationReport.SolutionList))}
+			for y := 0; y < len(populationReport.SolutionList); y++ {
+				champ.Programs[y] = populationReport.SolutionList[y].Program
 			}
 			best[x] = champ
 		}
