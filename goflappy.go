@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/tsavo/golightly/vm"
+	"github.com/TSavo/GoVirtual/vm"
 	"github.com/tsavo/gosolve/solve"
 	"log"
 	"math/rand"
@@ -24,98 +24,98 @@ const (
 
 func DefineInstructions(flapChan chan bool) (i *vm.InstructionSet) {
 	i = vm.NewInstructionSet()
-	i.Operator("noop", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("noop", func(p *vm.Processor, m *vm.Memory) {
 	})
-	i.Movement("jump", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("jump", func(p *vm.Processor, m *vm.Memory) {
 		p.Jump(p.Registers.Get(1))
 	})
-	i.Movement("jumpIfZero", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("jumpIfZero", func(p *vm.Processor, m *vm.Memory) {
 		if p.Registers.Get((*m).Get(0)) == 0 {
 			p.Jump(p.Registers.Get(1))
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfNotZero", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("jumpIfNotZero", func(p *vm.Processor, m *vm.Memory) {
 		if p.Registers.Get((*m).Get(0)) != 0 {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfEquals", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("jumpIfEquals", func(p *vm.Processor, m *vm.Memory) {
 		if p.Registers.Get((*m).Get(0)) == p.Registers.Get((*m).Get(1)) {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfNotEquals", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("jumpIfNotEquals", func(p *vm.Processor, m *vm.Memory) {
 		if p.Registers.Get((*m).Get(0)) != p.Registers.Get((*m).Get(1)) {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfGreaterThan", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("jumpIfGreaterThan", func(p *vm.Processor, m *vm.Memory) {
 		if p.Registers.Get((*m).Get(0)) > p.Registers.Get((*m).Get(1)) {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfLessThan", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("jumpIfLessThan", func(p *vm.Processor, m *vm.Memory) {
 		if p.Registers.Get((*m).Get(0)) < p.Registers.Get((*m).Get(1)) {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("call", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("call", func(p *vm.Processor, m *vm.Memory) {
 		p.Call(p.Registers.Get((*m).Get(0)))
 	})
-	i.Movement("return", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Movement("return", func(p *vm.Processor, m *vm.Memory) {
 		p.Return()
 	})
-	i.Operator("set", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("set", func(p *vm.Processor, m *vm.Memory) {
 		p.Registers.Set((*m).Get(0), (*m).Get(1))
 	})
-	i.Operator("store", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("store", func(p *vm.Processor, m *vm.Memory) {
 		p.Heap.Set(p.Registers.Get(1), p.Registers.Get(0))
 	})
-	i.Operator("load", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("load", func(p *vm.Processor, m *vm.Memory) {
 		p.Registers.Set(0, p.Heap.Get(p.Registers.Get(1)))
 	})
-	i.Operator("swap", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("swap", func(p *vm.Processor, m *vm.Memory) {
 		x := p.Registers.Get((*m).Get(0))
 		p.Registers.Set((*m).Get(0), (*m).Get(1))
 		p.Registers.Set((*m).Get(1), x)
 	})
-	i.Operator("push", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("push", func(p *vm.Processor, m *vm.Memory) {
 		p.Stack.Push(p.Registers.Get((*m).Get(0)))
 	})
-	i.Operator("pop", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("pop", func(p *vm.Processor, m *vm.Memory) {
 		if x, err := p.Stack.Pop(); !err {
 			p.Registers.Set((*m).Get(0), x)
 		}
 	})
-	i.Operator("increment", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("increment", func(p *vm.Processor, m *vm.Memory) {
 		p.Registers.Increment((*m).Get(0))
 	})
-	i.Operator("decrement", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("decrement", func(p *vm.Processor, m *vm.Memory) {
 		p.Registers.Decrement((*m).Get(0))
 	})
-	i.Operator("add", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("add", func(p *vm.Processor, m *vm.Memory) {
 		p.Registers.Set((*m).Get(0), p.Registers.Get((*m).Get(0))+p.Registers.Get((*m).Get(1)))
 	})
-	i.Operator("subtract", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("subtract", func(p *vm.Processor, m *vm.Memory) {
 		p.Registers.Set((*m).Get(0), p.Registers.Get((*m).Get(0))-p.Registers.Get((*m).Get(1)))
 	})
-	i.Operator("flap", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("flap", func(p *vm.Processor, m *vm.Memory) {
 		flapChan <- true
 		time.Sleep(50 * time.Millisecond)
 	})
-	i.Operator("sleep", func(p *vm.ProcessorCore, m *vm.Memory) {
+	i.Operator("sleep", func(p *vm.Processor, m *vm.Memory) {
 		time.Sleep(50 * time.Millisecond)
 	})
 
@@ -189,7 +189,7 @@ type FlappyEvaluator struct {
 	reward int64
 }
 
-func (eval *FlappyEvaluator) Evaluate(p *vm.ProcessorCore) int64 {
+func (eval *FlappyEvaluator) Evaluate(p *vm.Processor) int64 {
 	x := eval.reward - (p.Cost() / 10000)
 	eval.reward = 0
 	return x

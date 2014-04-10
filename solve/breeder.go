@@ -1,7 +1,7 @@
 package solve
 
 import (
-	"github.com/tsavo/golightly/vm"
+	"github.com/TSavo/GoVirtual/vm"
 	"strings"
 )
 

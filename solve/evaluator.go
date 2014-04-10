@@ -2,10 +2,10 @@ package solve
 
 import (
 	"time"
-	"github.com/tsavo/golightly/vm"
+	"github.com/TSavo/GoVirtual/vm"
 )
 type Evaluator interface {
-	Evaluate(*vm.ProcessorCore) int64
+	Evaluate(*vm.Processor) int64
 }
 
 type MultiEvaluator []*Evaluator
@@ -18,7 +18,7 @@ func NewMultiEvaluator(e... *Evaluator) *MultiEvaluator {
 	return m
 }
 
-func (multi *MultiEvaluator) Evaluate(p *vm.ProcessorCore) int64 {
+func (multi *MultiEvaluator) Evaluate(p *vm.Processor) int64 {
 	e := int64(0)
 	for _, x := range *multi {
 		e += (*x).Evaluate(p)
@@ -39,7 +39,7 @@ func Inverse(e *Evaluator) *InverseEvaluator {
 	return &InverseEvaluator{*e}
 }
 
-func (inverse *InverseEvaluator) Evaluate(p *vm.ProcessorCore) int64 {
+func (inverse *InverseEvaluator) Evaluate(p *vm.Processor) int64 {
 	return inverse.Evaluator.Evaluate(p) * -1
 }
 
@@ -49,7 +49,7 @@ func NewTimeEvaluator() *TimeEvaluator {
 	return &TimeEvaluator{}
 }
 
-func (t *TimeEvaluator) Evaluate(p *vm.ProcessorCore) int64 {
+func (t *TimeEvaluator) Evaluate(p *vm.Processor) int64 {
 	return time.Now().UnixNano() - p.StartTime
 }
 
@@ -59,6 +59,6 @@ func NewCostEvaluator() *CostEvaluator {
 	return &CostEvaluator{}
 }
 
-func (c *CostEvaluator) Evaluate(p *vm.ProcessorCore) int64 {
+func (c *CostEvaluator) Evaluate(p *vm.Processor) int64 {
 	return int64(p.Cost())
 }

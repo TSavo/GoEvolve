@@ -2,8 +2,7 @@ package solve
 
 import (
 	"fmt"
-
-	"github.com/tsavo/golightly/vm"
+	"github.com/TSavo/GoVirtual/vm"
 )
 
 type Population struct {
@@ -48,11 +47,11 @@ func NewPopulation(id int, sharedMemory *vm.Memory, rl int, is *vm.InstructionSe
 
 func (s *Population) Run() {
 	programs := (*s.Breeder).Breed(nil)
-	processors := make([]*vm.ProcessorCore, 0)
+	processors := make([]*vm.Processor, 0)
 	for {
 		solutions := make(SolutionList, len(programs))
 		for len(processors) < len(solutions) {
-			c := vm.NewProcessorCore(s.RegisterLength, s.InstructionSet, s.Heap, s.TerminationCondition)
+			c := vm.NewProcessor(s.RegisterLength, s.InstructionSet, s.Heap, s.TerminationCondition)
 			processors = append(processors, c)
 		}
 		if len(processors) > len(solutions) {
