@@ -214,17 +214,18 @@ func (flap FlappyBreeder) Breed(seeds []string) []string {
 
 func GenerateProgram() string {
 	pr := `
-	set 4, 0
-	set 2, 3
-	set 1, 5
-	set 3, ` + strconv.Itoa(rand.Int()%2000) + `
-	load
-	subtract 3, 0
-	set 1, 0
-	jumpIfGreaterThan 3, 1
-	flap
-	sleep
-	jump`
+set 4, 0
+set 2, 3
+set 1, 5
+set 3, ` + strconv.Itoa(rand.Int()%2000) + `
+load
+subtract 3, 0
+set 1, 0
+jumpIfGreaterThan 3, 1
+flap
+sleep
+jump`
+	fmt.Println(pr)
 	return pr
 }
 
