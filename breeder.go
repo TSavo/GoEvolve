@@ -1,7 +1,7 @@
-package solve
+package gosolve
 
 import (
-	"github.com/TSavo/GoVirtual/vm"
+	"github.com/TSavo/GoVirtual"
 	"strings"
 )
 
@@ -47,10 +47,10 @@ func (cp CopyBreeder) Breed(initialPop []string) []string {
 
 type RandomBreeder struct {
 	PopulationSize, ProgramLength int
-	*vm.InstructionSet
+	*govirtual.InstructionSet
 }
 
-func NewRandomBreeder(popSize int, programLen int, is *vm.InstructionSet) *RandomBreeder {
+func NewRandomBreeder(popSize int, programLen int, is *govirtual.InstructionSet) *RandomBreeder {
 	return &RandomBreeder{popSize, programLen, is}
 }
 
@@ -59,7 +59,7 @@ func (breeder RandomBreeder) Breed([]string) []string {
 	for x := 0; x < breeder.PopulationSize; x++ {
 		p := ""
 		for y := 0; y < breeder.ProgramLength; y++ {
-			p += breeder.Encode(&vm.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt()}).String() + "\n"
+			p += breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt()}).String() + "\n"
 		}
 		progs[x] = p
 	}
@@ -103,10 +103,10 @@ func (breeder CrossoverBreeder) Breed(seeds []string) []string {
 type MutationBreeder struct {
 	PopulationSize int
 	MutationChance float64
-	*vm.InstructionSet
+	*govirtual.InstructionSet
 }
 
-func NewMutationBreeder(popSize int, mutationChance float64, is *vm.InstructionSet) MutationBreeder {
+func NewMutationBreeder(popSize int, mutationChance float64, is *govirtual.InstructionSet) MutationBreeder {
 	return MutationBreeder{popSize, mutationChance, is}
 }
 
@@ -120,12 +120,12 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 		y = y % len(seeds)
 		startProg := seeds[y]
 		prog := breeder.CompileProgram(startProg)
-		outProg := make(vm.Program, 0)
+		outProg := make(govirtual.Program, 0)
 		for _, op := range *prog {
 			if rng.Float64() < breeder.MutationChance {
 				if rng.Float64() < 0.1 {
 					for r := rng.Int() % 10; r < 10; r++ {
-						outProg = append(outProg, breeder.Encode(&vm.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt()}))
+						outProg = append(outProg, breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt()}))
 					}
 				}
 				if rng.Float64() < 0.1 && len(outProg) > 0 {

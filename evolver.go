@@ -1,7 +1,7 @@
-package solve
+package gosolve
 
 import (
-	"github.com/TSavo/GoVirtual/vm"
+	"github.com/TSavo/GoVirtual"
 	"runtime"
 	"sort"
 	"time"
@@ -33,7 +33,7 @@ func NewIslandEvolver(champSize int) *IslandEvolver {
 	return &i
 }
 
-func (self *IslandEvolver) AddPopulation(heap *vm.Memory, registerSize int, is *vm.InstructionSet, term vm.TerminationCondition, breeder Breeder, eval Evaluator, selector Selector) {
+func (self *IslandEvolver) AddPopulation(heap *govirtual.Memory, registerSize int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, breeder Breeder, eval Evaluator, selector Selector) {
 	breeders := Breeders(breeder, self.InfluxBreeder)
 	population := NewPopulation(self.lastId, heap, registerSize, is, term, breeders, eval, selector)
 	population.PopulationReportChan = self.PopulationReportChan

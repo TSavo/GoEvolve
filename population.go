@@ -1,20 +1,20 @@
-package solve
+package gosolve
 
 import (
 	"fmt"
-	"github.com/TSavo/GoVirtual/vm"
+	"github.com/TSavo/GoVirtual"
 )
 
 type Population struct {
 	Id, RegisterLength   int
-	InstructionSet       *vm.InstructionSet
+	InstructionSet       *govirtual.InstructionSet
 	Breeder              *Breeder
 	Evaluator            *Evaluator
 	Selector             *Selector
-	TerminationCondition *vm.TerminationCondition
+	TerminationCondition *govirtual.TerminationCondition
 	ControlChan          chan bool
 	PopulationReportChan chan *PopulationReport
-	Heap                 *vm.Memory
+	Heap                 *govirtual.Memory
 }
 
 type Solution struct {
@@ -41,17 +41,17 @@ func (s SolutionList) Len() int           { return len(s) }
 func (s SolutionList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s SolutionList) Less(i, j int) bool { return s[i].Reward > s[j].Reward }
 
-func NewPopulation(id int, sharedMemory *vm.Memory, rl int, is *vm.InstructionSet, term vm.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Population {
+func NewPopulation(id int, sharedMemory *govirtual.Memory, rl int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Population {
 	return &Population{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *PopulationReport, 1), sharedMemory}
 }
 
 func (s *Population) Run() {
 	programs := (*s.Breeder).Breed(nil)
-	processors := make([]*vm.Processor, 0)
+	processors := make([]*govirtual.Processor, 0)
 	for {
 		solutions := make(SolutionList, len(programs))
 		for len(processors) < len(solutions) {
-			c := vm.NewProcessor(s.RegisterLength, s.InstructionSet, s.Heap, s.TerminationCondition)
+			c := govirtual.NewProcessor(s.RegisterLength, s.InstructionSet, s.Heap, s.TerminationCondition)
 			processors = append(processors, c)
 		}
 		if len(processors) > len(solutions) {

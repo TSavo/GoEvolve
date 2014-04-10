@@ -1,4 +1,4 @@
-package solve
+package gosolve
 
 import (
 	"github.com/seehuhn/mt19937"

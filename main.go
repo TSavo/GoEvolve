@@ -1,10 +1,12 @@
+// +build ignore
+
 package main
 
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/TSavo/GoVirtual/vm"
-	"github.com/tsavo/gosolve/solve"
+	"github.com/TSavo/GoSolve"
 	"log"
 	"math/rand"
 	"net/http"
@@ -229,8 +231,8 @@ jump`
 	return pr
 }
 
-var populationInfluxChan solve.InfluxBreeder = make(solve.InfluxBreeder, 100)
-var PopulationReportChan chan *solve.PopulationReport = make(chan *solve.PopulationReport, 100)
+var populationInfluxChan gosolve.InfluxBreeder = make(gosolve.InfluxBreeder, 100)
+var PopulationReportChan chan *gosolve.PopulationReport = make(chan *gosolve.PopulationReport, 100)
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
@@ -249,9 +251,9 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	is := DefineInstructions(outChan)
 	deadChannel := vm.NewChannelTerminationCondition()
 	terminationCondition := vm.OrTerminate(deadChannel, *vm.NewCostTerminationCondition(50000000))
-	breeder := *solve.Breeders(solve.NewCopyBreeder(15), FlappyBreeder{10}, solve.NewRandomBreeder(25, 50, is), solve.NewMutationBreeder(25, 0.1, is), solve.NewCrossoverBreeder(25))
+	breeder := *gosolve.Breeders(gosolve.NewCopyBreeder(15), FlappyBreeder{10}, gosolve.NewRandomBreeder(25, 50, is), gosolve.NewMutationBreeder(25, 0.1, is), gosolve.NewCrossoverBreeder(25))
 	flappyEval := new(FlappyEvaluator)
-	selector := solve.AndSelect(solve.TopX(10), solve.Tournament(10))
+	selector := gosolve.AndSelect(gosolve.TopX(10), gosolve.Tournament(10))
 	FlappyIsland.AddPopulation(&heap, 4, is, terminationCondition, breeder, flappyEval, selector)
 	go func() {
 		for {
@@ -296,10 +298,10 @@ func loadProgram(projectName string, id int) vm.Program {
 	return nil
 }
 
-var FlappyIsland *solve.IslandEvolver
+var FlappyIsland *gosolve.IslandEvolver
 
 func main() {
-	FlappyIsland = solve.NewIslandEvolver(3)
+	FlappyIsland = gosolve.NewIslandEvolver(3)
 	go h.run()
 	go func() {
 		http.HandleFunc("/ws", wsHandler)
