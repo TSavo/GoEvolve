@@ -5,8 +5,8 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/TSavo/GoVirtual/vm"
-	"github.com/TSavo/GoSolve"
+	"github.com/TSavo/GoVirtual"
+	"github.com/TSavo/GoEvolve"
 	"log"
 	"math/rand"
 	"net/http"
@@ -24,100 +24,100 @@ const (
 	ROUND_LENGTH    = 10
 )
 
-func DefineInstructions(flapChan chan bool) (i *vm.InstructionSet) {
-	i = vm.NewInstructionSet()
-	i.Operator("noop", func(p *vm.Processor, m *vm.Memory) {
+func DefineInstructions(flapChan chan bool) (i *govirtual.InstructionSet) {
+	i = govirtual.NewInstructionSet()
+	i.Operator("noop", func(p *govirtual.Processor, m *govirtual.Memory) {
 	})
-	i.Movement("jump", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("jump", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Jump(p.Registers.Get(1))
 	})
-	i.Movement("jumpIfZero", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("jumpIfZero", func(p *govirtual.Processor, m *govirtual.Memory) {
 		if p.Registers.Get((*m).Get(0)) == 0 {
 			p.Jump(p.Registers.Get(1))
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfNotZero", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("jumpIfNotZero", func(p *govirtual.Processor, m *govirtual.Memory) {
 		if p.Registers.Get((*m).Get(0)) != 0 {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfEquals", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("jumpIfEquals", func(p *govirtual.Processor, m *govirtual.Memory) {
 		if p.Registers.Get((*m).Get(0)) == p.Registers.Get((*m).Get(1)) {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfNotEquals", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("jumpIfNotEquals", func(p *govirtual.Processor, m *govirtual.Memory) {
 		if p.Registers.Get((*m).Get(0)) != p.Registers.Get((*m).Get(1)) {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfGreaterThan", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("jumpIfGreaterThan", func(p *govirtual.Processor, m *govirtual.Memory) {
 		if p.Registers.Get((*m).Get(0)) > p.Registers.Get((*m).Get(1)) {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("jumpIfLessThan", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("jumpIfLessThan", func(p *govirtual.Processor, m *govirtual.Memory) {
 		if p.Registers.Get((*m).Get(0)) < p.Registers.Get((*m).Get(1)) {
 			p.Jump(p.Registers[1])
 		} else {
 			p.InstructionPointer++
 		}
 	})
-	i.Movement("call", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("call", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Call(p.Registers.Get((*m).Get(0)))
 	})
-	i.Movement("return", func(p *vm.Processor, m *vm.Memory) {
+	i.Movement("return", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Return()
 	})
-	i.Operator("set", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("set", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Registers.Set((*m).Get(0), (*m).Get(1))
 	})
-	i.Operator("store", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("store", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Heap.Set(p.Registers.Get(1), p.Registers.Get(0))
 	})
-	i.Operator("load", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("load", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Registers.Set(0, p.Heap.Get(p.Registers.Get(1)))
 	})
-	i.Operator("swap", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("swap", func(p *govirtual.Processor, m *govirtual.Memory) {
 		x := p.Registers.Get((*m).Get(0))
 		p.Registers.Set((*m).Get(0), (*m).Get(1))
 		p.Registers.Set((*m).Get(1), x)
 	})
-	i.Operator("push", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("push", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Stack.Push(p.Registers.Get((*m).Get(0)))
 	})
-	i.Operator("pop", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("pop", func(p *govirtual.Processor, m *govirtual.Memory) {
 		if x, err := p.Stack.Pop(); !err {
 			p.Registers.Set((*m).Get(0), x)
 		}
 	})
-	i.Operator("increment", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("increment", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Registers.Increment((*m).Get(0))
 	})
-	i.Operator("decrement", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("decrement", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Registers.Decrement((*m).Get(0))
 	})
-	i.Operator("add", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("add", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Registers.Set((*m).Get(0), p.Registers.Get((*m).Get(0))+p.Registers.Get((*m).Get(1)))
 	})
-	i.Operator("subtract", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("subtract", func(p *govirtual.Processor, m *govirtual.Memory) {
 		p.Registers.Set((*m).Get(0), p.Registers.Get((*m).Get(0))-p.Registers.Get((*m).Get(1)))
 	})
-	i.Operator("flap", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("flap", func(p *govirtual.Processor, m *govirtual.Memory) {
 		flapChan <- true
 		time.Sleep(50 * time.Millisecond)
 	})
-	i.Operator("sleep", func(p *vm.Processor, m *vm.Memory) {
+	i.Operator("sleep", func(p *govirtual.Processor, m *govirtual.Memory) {
 		time.Sleep(50 * time.Millisecond)
 	})
 
@@ -191,14 +191,14 @@ type FlappyEvaluator struct {
 	reward int64
 }
 
-func (eval *FlappyEvaluator) Evaluate(p *vm.Processor) int64 {
+func (eval *FlappyEvaluator) Evaluate(p *govirtual.Processor) int64 {
 	x := eval.reward - (p.Cost() / 10000)
 	eval.reward = 0
 	return x
 }
 
 type FlappyGenerator struct {
-	InstructionSet *vm.InstructionSet
+	InstructionSet *govirtual.InstructionSet
 }
 
 
@@ -231,8 +231,8 @@ jump`
 	return pr
 }
 
-var populationInfluxChan gosolve.InfluxBreeder = make(gosolve.InfluxBreeder, 100)
-var PopulationReportChan chan *gosolve.PopulationReport = make(chan *gosolve.PopulationReport, 100)
+var populationInfluxChan goevolve.InfluxBreeder = make(goevolve.InfluxBreeder, 100)
+var PopulationReportChan chan *goevolve.PopulationReport = make(chan *goevolve.PopulationReport, 100)
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
@@ -246,14 +246,14 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	h.register <- c
 	defer func() { h.unregister <- c }()
 	go c.writer()
-	heap := make(vm.Memory, 8)
+	heap := make(govirtual.Memory, 8)
 	outChan := make(chan bool, 1)
 	is := DefineInstructions(outChan)
-	deadChannel := vm.NewChannelTerminationCondition()
-	terminationCondition := vm.OrTerminate(deadChannel, *vm.NewCostTerminationCondition(50000000))
-	breeder := *gosolve.Breeders(gosolve.NewCopyBreeder(15), FlappyBreeder{10}, gosolve.NewRandomBreeder(25, 50, is), gosolve.NewMutationBreeder(25, 0.1, is), gosolve.NewCrossoverBreeder(25))
+	deadChannel := govirtual.NewChannelTerminationCondition()
+	terminationCondition := govirtual.OrTerminate(deadChannel, *govirtual.NewCostTerminationCondition(50000000))
+	breeder := *goevolve.Breeders(goevolve.NewCopyBreeder(15), FlappyBreeder{10}, goevolve.NewRandomBreeder(25, 50, is), goevolve.NewMutationBreeder(25, 0.1, is), goevolve.NewCrossoverBreeder(25))
 	flappyEval := new(FlappyEvaluator)
-	selector := gosolve.AndSelect(gosolve.TopX(10), gosolve.Tournament(10))
+	selector := goevolve.AndSelect(goevolve.TopX(10), goevolve.Tournament(10))
 	FlappyIsland.AddPopulation(&heap, 4, is, terminationCondition, breeder, flappyEval, selector)
 	go func() {
 		for {
@@ -289,7 +289,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	c.reader(inFlap)
 }
 
-func loadProgram(projectName string, id int) vm.Program {
+func loadProgram(projectName string, id int) govirtual.Program {
 	usr, err := user.Current()
 	if err != nil {
 		log.Fatal(err)
@@ -298,10 +298,10 @@ func loadProgram(projectName string, id int) vm.Program {
 	return nil
 }
 
-var FlappyIsland *gosolve.IslandEvolver
+var FlappyIsland *goevolve.IslandEvolver
 
 func main() {
-	FlappyIsland = gosolve.NewIslandEvolver(3)
+	FlappyIsland = goevolve.NewIslandEvolver(3)
 	go h.run()
 	go func() {
 		http.HandleFunc("/ws", wsHandler)

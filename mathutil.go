@@ -1,4 +1,4 @@
-package gosolve
+package goevolve
 
 import (
 	"github.com/seehuhn/mt19937"
