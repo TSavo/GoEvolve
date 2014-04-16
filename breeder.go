@@ -59,7 +59,7 @@ func (breeder RandomBreeder) Breed([]string) []string {
 	for x := 0; x < breeder.PopulationSize; x++ {
 		p := ""
 		for y := 0; y < breeder.ProgramLength; y++ {
-			p += breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt()}).String() + "\n"
+			p += breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt(), rng.SmallInt()}).String() + "\n"
 		}
 		progs[x] = p
 	}

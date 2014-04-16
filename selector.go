@@ -116,6 +116,9 @@ func FightInTournament(warrior1 *Solution, warrior2 *Solution) *Solution {
 	} else {
 		highest, lowest = warrior2, warrior1
 	}
+	if(highest.Reward <= 0) {
+		return highest
+	}
 	if rng.Int63()%highest.Reward > lowest.Reward/2 {
 		return highest
 	} else {

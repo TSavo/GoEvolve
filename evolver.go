@@ -33,9 +33,9 @@ func NewIslandEvolver(champSize int) *IslandEvolver {
 	return &i
 }
 
-func (self *IslandEvolver) AddPopulation(heap *govirtual.Memory, registerSize int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, breeder Breeder, eval Evaluator, selector Selector) {
+func (self *IslandEvolver) AddPopulation(heap *govirtual.Memory, floatHeap *govirtual.FloatMemory, registerSize int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, breeder Breeder, eval Evaluator, selector Selector) {
 	breeders := Breeders(breeder, self.InfluxBreeder)
-	population := NewPopulation(self.lastId, heap, registerSize, is, term, breeders, eval, selector)
+	population := NewPopulation(self.lastId, heap, floatHeap, registerSize, is, term, breeders, eval, selector)
 	population.PopulationReportChan = self.PopulationReportChan
 	go population.Run()
 	self.lastId++

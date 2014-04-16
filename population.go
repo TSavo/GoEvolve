@@ -15,6 +15,7 @@ type Population struct {
 	ControlChan          chan bool
 	PopulationReportChan chan *PopulationReport
 	Heap                 *govirtual.Memory
+	FloatHeap			 *govirtual.FloatMemory
 }
 
 type Solution struct {
@@ -41,8 +42,8 @@ func (s SolutionList) Len() int           { return len(s) }
 func (s SolutionList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s SolutionList) Less(i, j int) bool { return s[i].Reward > s[j].Reward }
 
-func NewPopulation(id int, sharedMemory *govirtual.Memory, rl int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Population {
-	return &Population{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *PopulationReport, 1), sharedMemory}
+func NewPopulation(id int, sharedMemory *govirtual.Memory, floatMemory *govirtual.FloatMemory, rl int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Population {
+	return &Population{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *PopulationReport, 1), sharedMemory, floatMemory}
 }
 
 func (s *Population) Run() {
@@ -51,7 +52,7 @@ func (s *Population) Run() {
 	for {
 		solutions := make(SolutionList, len(programs))
 		for len(processors) < len(solutions) {
-			c := govirtual.NewProcessor(s.RegisterLength, s.InstructionSet, s.Heap, s.TerminationCondition)
+			c := govirtual.NewProcessor(s.RegisterLength, s.InstructionSet, s.Heap, s.FloatHeap, s.TerminationCondition)
 			processors = append(processors, c)
 		}
 		if len(processors) > len(solutions) {
