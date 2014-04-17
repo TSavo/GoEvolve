@@ -15,7 +15,7 @@ type Population struct {
 	ControlChan          chan bool
 	PopulationReportChan chan *PopulationReport
 	Heap                 *govirtual.Memory
-	FloatHeap			 *govirtual.FloatMemory
+	FloatHeap            *govirtual.FloatMemory
 }
 
 type Solution struct {
@@ -58,6 +58,7 @@ func (s *Population) Run() {
 		if len(processors) > len(solutions) {
 			processors = processors[:len(solutions)]
 		}
+
 		for x, pro := range processors {
 			select {
 			case <-s.ControlChan:
