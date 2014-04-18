@@ -1,10 +1,14 @@
 package goevolve
 
 import (
+	"bufio"
 	"github.com/TSavo/GoVirtual"
+	"os"
 	"runtime"
 	"sort"
 	"time"
+	"os/exec"
+	"fmt"
 )
 
 type IslandEvolver struct {
@@ -27,8 +31,8 @@ func (s Champions) Less(i, j int) bool {
 	return s[i].Reward > s[j].Reward
 }
 
-func NewIslandEvolver(champSize int) *IslandEvolver {
-	i := IslandEvolver{champSize, make(chan *PopulationReport, 100), make(InfluxBreeder, 100), 0}
+func NewIslandEvolver() *IslandEvolver {
+	i := IslandEvolver{0, make(chan *PopulationReport, 100), make(InfluxBreeder, 100), 0}
 	go i.Interbreed()
 	return &i
 }
@@ -39,10 +43,15 @@ func (self *IslandEvolver) AddPopulation(heap *govirtual.Memory, floatHeap *govi
 	population.PopulationReportChan = self.PopulationReportChan
 	go population.Run()
 	self.lastId++
+	self.ChampionSize++
 }
 
 func (self *IslandEvolver) Interbreed() {
 	for {
+		if self.ChampionSize < 2 {
+			time.Sleep(1 * time.Second)
+			continue
+		}
 		best := make(Champions, self.ChampionSize)
 		for x := 0; x < self.ChampionSize; x++ {
 			runtime.Gosched()
@@ -58,6 +67,24 @@ func (self *IslandEvolver) Interbreed() {
 			sort.Sort(champs)
 			time.Sleep(time.Second)
 			self.InfluxBreeder <- champs[0].Programs
+			writeFile("bestProgram.vm", champs[0].Programs[0])
 		}(best)
 	}
+}
+
+func writeFile(name, data string) {
+	f, _ := os.Create(name)
+	w := bufio.NewWriter(f)
+	w.WriteString(data)
+	w.Flush()
+	f.Close()
+	cmd := exec.Command("git", "add", data)
+	out, _ := cmd.Output()
+	fmt.Printf("Git: %v", string(out))
+	cmd = exec.Command("git", "commit", "-m", "\"Automated pushing best program so far\"")
+	out, _ = cmd.Output()
+	fmt.Printf("Git: %v", string(out))
+	cmd = exec.Command("git", "push")
+	out, _ = cmd.Output()
+	fmt.Printf("Git: %v", string(out))
 }

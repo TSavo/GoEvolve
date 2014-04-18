@@ -88,7 +88,7 @@ func (breeder CrossoverBreeder) Breed(seeds []string) []string {
 		l2 := len(prog2)
 		prog := make([]string, Max(l1, l2))
 		split := rng.Int() % Min(l1, l2)
-		endSplit := (rng.Int()%Min(l1, l2) - split) + split
+		endSplit := (rng.Int()%(Min(l1, l2) - split)) + split
 		for x := 0; x < len(prog); x++ {
 			if x > len(prog1)-1 || (x < endSplit && x >= split && x < len(prog2)) {
 				prog[x] = prog2[x]
@@ -124,9 +124,9 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 		outProg := make(govirtual.Program, 0)
 		for _, op := range *prog {
 			if rng.Float64() < breeder.MutationChance {
-				if rng.Float64() < 0.1 {
+				if rng.Float64() < breeder.MutationChance {
 					for r := rng.Int() % 10; r < 10; r++ {
-						outProg = append(outProg, breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt()}))
+						outProg = append(outProg, breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt(), rng.SmallInt()}))
 					}
 				}
 				if rng.Float64() < 0.1 && len(outProg) > 0 {
@@ -141,6 +141,9 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 				}
 				if rng.Float64() < 0.5 {
 					decode.Set(2, rng.SmallInt())
+				}
+				if rng.Float64() < 0.5 {
+					decode.Set(3, rng.SmallInt())
 				}
 				outProg = append(outProg, breeder.Encode(decode))
 			} else {
