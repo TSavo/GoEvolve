@@ -1,7 +1,7 @@
 package goevolve
 
 import (
-	"fmt"
+	"log"
 	"github.com/TSavo/GoVirtual"
 )
 
@@ -65,7 +65,7 @@ func (s *Population) Run() {
 				return
 			default:
 			}
-			fmt.Printf("#%d: %d\n", s.Id, x)
+			log.Printf("#%d: %d\n", s.Id, x)
 			pro.Reset()
 			pro.CompileAndLoad(programs[x])
 			pro.Run()
