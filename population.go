@@ -1,8 +1,10 @@
 package goevolve
 
 import (
-	"log"
+	"crypto/sha256"
+	"fmt"
 	"github.com/TSavo/GoVirtual"
+	"log"
 )
 
 type Population struct {
@@ -16,6 +18,7 @@ type Population struct {
 	PopulationReportChan chan *PopulationReport
 	Heap                 *govirtual.Memory
 	FloatHeap            *govirtual.FloatMemory
+	Solutions            map[string]*Solution
 }
 
 type Solution struct {
@@ -43,7 +46,7 @@ func (s SolutionList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s SolutionList) Less(i, j int) bool { return s[i].Reward > s[j].Reward }
 
 func NewPopulation(id int, sharedMemory *govirtual.Memory, floatMemory *govirtual.FloatMemory, rl int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Population {
-	return &Population{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *PopulationReport, 1), sharedMemory, floatMemory}
+	return &Population{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *PopulationReport, 1), sharedMemory, floatMemory, make(map[string]*Solution)}
 }
 
 func (s *Population) Run() {
@@ -66,10 +69,17 @@ func (s *Population) Run() {
 			default:
 			}
 			log.Printf("#%d: %d\n", s.Id, x)
-			pro.Reset()
-			pro.CompileAndLoad(programs[x])
-			pro.Run()
-			solutions[x] = &Solution{(*s.Evaluator).Evaluate(pro), pro.Program.Decompile()}
+			sha := fmt.Sprintf("%x", sha256.Sum256([]byte(programs[x])))
+			sol, notNeeded := s.Solutions[sha]
+			if notNeeded {
+				solutions[x] = sol
+			} else {
+				pro.Reset()
+				pro.CompileAndLoad(programs[x])
+				pro.Run()
+				solutions[x] = &Solution{(*s.Evaluator).Evaluate(pro), pro.Program.Decompile()}
+				s.Solutions[sha] = solutions[x]
+			}
 		}
 		select {
 		case s.PopulationReportChan <- &PopulationReport{s.Id, solutions}:
