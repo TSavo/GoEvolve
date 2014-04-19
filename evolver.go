@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 	"os/exec"
-	"fmt"
+	"log"
 )
 
 type IslandEvolver struct {
@@ -78,13 +78,13 @@ func writeFile(name, data string) {
 	w.WriteString(data)
 	w.Flush()
 	f.Close()
-	cmd := exec.Command("git", "add", data)
+	cmd := exec.Command("git", "add .")
 	out, _ := cmd.Output()
-	fmt.Printf("Git: %v", string(out))
-	cmd = exec.Command("git", "commit", "-m", "\"Automated pushing best program so far\"")
+	log.Printf("Git: %v", string(out))
+	cmd = exec.Command("git", "commit -m \"Automated pushing best program so far\"")
 	out, _ = cmd.Output()
-	fmt.Printf("Git: %v", string(out))
+	log.Printf("Git: %v", string(out))
 	cmd = exec.Command("git", "push")
 	out, _ = cmd.Output()
-	fmt.Printf("Git: %v", string(out))
+	log.Printf("Git: %v", string(out))
 }

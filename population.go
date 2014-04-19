@@ -52,7 +52,7 @@ func (s *Population) Run() {
 	for {
 		solutions := make(SolutionList, len(programs))
 		for len(processors) < len(solutions) {
-			c := govirtual.NewProcessor(s.RegisterLength, s.InstructionSet, s.Heap, s.FloatHeap, s.TerminationCondition)
+			c := govirtual.NewProcessor(s.Id, s.RegisterLength, s.InstructionSet, s.Heap, s.FloatHeap, s.TerminationCondition)
 			processors = append(processors, c)
 		}
 		if len(processors) > len(solutions) {

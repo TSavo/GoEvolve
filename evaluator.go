@@ -32,15 +32,15 @@ func (multi *MultiEvaluator) AddEvaluator(e *Evaluator) *MultiEvaluator {
 }
 
 type InverseEvaluator struct {
-	Evaluator
+	Evaluator *Evaluator
 }
 
-func Inverse(e *Evaluator) *InverseEvaluator {
-	return &InverseEvaluator{*e}
+func Inverse(e Evaluator) *InverseEvaluator {
+	return &InverseEvaluator{&e}
 }
 
-func (inverse *InverseEvaluator) Evaluate(p *govirtual.Processor) int64 {
-	return inverse.Evaluator.Evaluate(p) * -1
+func (inverse InverseEvaluator) Evaluate(p *govirtual.Processor) int64 {
+	return (*inverse.Evaluator).Evaluate(p) * -1
 }
 
 type TimeEvaluator struct {}
