@@ -71,7 +71,7 @@ func (sel StochasticUniversalSelector) Select(s *SolutionList) *SolutionList {
 	sort.Sort(sort.Reverse(*s))
 	f := (*s)[len(*s)-1].Reward
 	n := sel.Keep
-	p := int(f / int64(n))
+	p := f / n
 	start := rng.Int()%p + 1
 	pointers := make([]int, n)
 	for i := 0; i < n; i++ {
@@ -119,7 +119,7 @@ func FightInTournament(warrior1 *Solution, warrior2 *Solution) *Solution {
 	if(highest.Reward <= 0) {
 		return highest
 	}
-	if rng.Int63()%highest.Reward > lowest.Reward/2 {
+	if rng.Int()%highest.Reward > lowest.Reward/2 {
 		return highest
 	} else {
 		return lowest

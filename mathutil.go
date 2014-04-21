@@ -18,6 +18,10 @@ const (
 	MinInt64 = int64(math.MinInt64)
 )
 
+func Now() int {
+	return int(time.Now().UnixNano())
+}
+
 type SafeRNG struct {
 	rng *rand.Rand
 }
@@ -55,9 +59,9 @@ func (rng *SafeRNG) SmallInt() int {
 	lock.Lock()
 	defer lock.Unlock()
 	x := rng.rng.Intn(10000)
-	if rng.rng.Float64() < 0.5 {
-		x *= -1
-	}
+	//	if rng.rng.Float64() < 0.5 {
+	//		x *= -1
+	//	}
 	return x
 }
 

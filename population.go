@@ -17,12 +17,16 @@ type Population struct {
 	ControlChan          chan bool
 	PopulationReportChan chan *PopulationReport
 	Heap                 *govirtual.Memory
-	FloatHeap            *govirtual.FloatMemory
-	Solutions            map[string]*Solution
+}
+
+var SolutionCache map[string]*Solution
+
+func init(){
+	SolutionCache = make(map[string]*Solution)
 }
 
 type Solution struct {
-	Reward  int64
+	Reward  int
 	Program string
 }
 
@@ -45,8 +49,8 @@ func (s SolutionList) Len() int           { return len(s) }
 func (s SolutionList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s SolutionList) Less(i, j int) bool { return s[i].Reward > s[j].Reward }
 
-func NewPopulation(id int, sharedMemory *govirtual.Memory, floatMemory *govirtual.FloatMemory, rl int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Population {
-	return &Population{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *PopulationReport, 1), sharedMemory, floatMemory, make(map[string]*Solution)}
+func NewPopulation(id int, sharedMemory *govirtual.Memory, rl int, is *govirtual.InstructionSet, term govirtual.TerminationCondition, gen Breeder, eval Evaluator, selector Selector) *Population {
+	return &Population{id, rl, is, &gen, &eval, &selector, &term, make(chan bool, 1), make(chan *PopulationReport, 1), sharedMemory}
 }
 
 func (s *Population) Run() {
@@ -55,7 +59,7 @@ func (s *Population) Run() {
 	for {
 		solutions := make(SolutionList, len(programs))
 		for len(processors) < len(solutions) {
-			c := govirtual.NewProcessor(s.Id, s.RegisterLength, s.InstructionSet, s.Heap, s.FloatHeap, s.TerminationCondition)
+			c := govirtual.NewProcessor(s.Id, s.RegisterLength, s.InstructionSet, s.Heap, s.TerminationCondition)
 			processors = append(processors, c)
 		}
 		if len(processors) > len(solutions) {
@@ -70,15 +74,18 @@ func (s *Population) Run() {
 			}
 			log.Printf("#%d: %d\n", s.Id, x)
 			sha := fmt.Sprintf("%x", sha256.Sum256([]byte(programs[x])))
-			sol, notNeeded := s.Solutions[sha]
+			sol, notNeeded := SolutionCache[sha]
 			if notNeeded {
 				solutions[x] = sol
 			} else {
 				pro.Reset()
 				pro.CompileAndLoad(programs[x])
 				pro.Run()
-				solutions[x] = &Solution{(*s.Evaluator).Evaluate(pro), pro.Program.Decompile()}
-				s.Solutions[sha] = solutions[x]
+				solutions[x] = &Solution{(*s.Evaluator).Evaluate(pro), programs[x]}
+				potential, present := SolutionCache[sha]
+				if !present || potential.Reward > solutions[x].Reward {
+					SolutionCache[sha] = solutions[x]
+				}
 			}
 		}
 		select {

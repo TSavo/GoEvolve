@@ -88,7 +88,7 @@ func (breeder CrossoverBreeder) Breed(seeds []string) []string {
 		l2 := len(prog2)
 		prog := make([]string, Max(l1, l2))
 		split := rng.Int() % Min(l1, l2)
-		endSplit := (rng.Int()%(Min(l1, l2) - split)) + split
+		endSplit := (rng.Int() % (Min(l1, l2) - split)) + split
 		for x := 0; x < len(prog); x++ {
 			if x > len(prog1)-1 || (x < endSplit && x >= split && x < len(prog2)) {
 				prog[x] = prog2[x]
@@ -121,15 +121,33 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 		y = y % len(seeds)
 		startProg := seeds[y]
 		prog := breeder.CompileProgram(startProg)
-		outProg := make(govirtual.Program, 0)
-		for _, op := range *prog {
+		outProg := govirtual.NewProgram(0)
+		for _, op := range prog.Operations {
 			if rng.Float64() < breeder.MutationChance {
 				if rng.Float64() < breeder.MutationChance {
 					for r := rng.Int() % 10; r < 10; r++ {
-						outProg = append(outProg, breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt(), rng.SmallInt()}))
+						if rng.Float64() < 0.1 {
+							labels := prog.LabelNames()
+							if rng.Float64() < 0.5 && len(labels) > 0 {
+								outProg.Append(breeder.CompileLabel(labels[rng.Int()%len(labels)]))
+							} else {
+								outProg.Append(breeder.CompileLabel(":" + USDict.RandomWord()))
+							}
+						} else {
+							outProg = outProg.Append(breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt(), rng.SmallInt()}))
+						}
 					}
 				}
-				if rng.Float64() < 0.1 && len(outProg) > 0 {
+				if rng.Float64() < 0.1 && outProg.Len() > 0 {
+					continue
+				}
+				if rng.Float64() < 0.1 {
+					labels := prog.LabelNames()
+					if rng.Float64() < 0.5 && len(labels) > 0 {
+						outProg.Append(breeder.CompileLabel(labels[rng.Int()%len(labels)]))
+					} else {
+						outProg.Append(breeder.CompileLabel(":" + USDict.RandomWord()))
+					}
 					continue
 				}
 				decode := op.Decode()
@@ -138,16 +156,28 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 				}
 				if rng.Float64() < 0.5 {
 					decode.Set(1, rng.SmallInt())
+				} else if rng.Float64() < 0.5 {
+					decode.Set(1, decode.GetCardinal(1)+1)
+				} else if rng.Float64() < 0.5 {
+					decode.Set(1, decode.GetCardinal(1)-1)
 				}
 				if rng.Float64() < 0.5 {
 					decode.Set(2, rng.SmallInt())
+				} else if rng.Float64() < 0.5 {
+					decode.Set(2, decode.GetCardinal(2)+1)
+				} else if rng.Float64() < 0.5 {
+					decode.Set(2, decode.GetCardinal(2)-1)
 				}
 				if rng.Float64() < 0.5 {
 					decode.Set(3, rng.SmallInt())
+				} else if rng.Float64() < 0.5 {
+					decode.Set(3, decode.GetCardinal(3)+1)
+				} else if rng.Float64() < 0.5 {
+					decode.Set(3, decode.GetCardinal(3)-1)
 				}
-				outProg = append(outProg, breeder.Encode(decode))
+				outProg = outProg.Append(breeder.Encode(decode))
 			} else {
-				outProg = append(outProg, op)
+				outProg = outProg.Append(op)
 			}
 		}
 		out[x] = outProg.Decompile()
