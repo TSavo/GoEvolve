@@ -54,7 +54,7 @@ func NewPopulation(id int, sharedMemory *govirtual.Memory, rl int, is *govirtual
 }
 
 func (s *Population) Run() {
-	programs := (*s.Breeder).Breed(nil)
+	programs := (*s.Breeder).Breed((*s.Breeder).Breed(nil))
 	processors := make([]*govirtual.Processor, 0)
 	for {
 		solutions := make(SolutionList, len(programs))

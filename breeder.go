@@ -1,7 +1,9 @@
 package goevolve
 
 import (
+	//"fmt"
 	"github.com/TSavo/GoVirtual"
+	"strconv"
 	"strings"
 )
 
@@ -21,7 +23,13 @@ func (multi MultiBreeder) Breed(seeds []string) []string {
 	for _, x := range multi {
 		ret = append(ret, (x).Breed(seeds)...)
 	}
-	return ret
+	out := make([]string, 0)
+	for _, x := range ret {
+		if(len(strings.TrimSpace(x)) > 0){
+			out = append(out, x)
+		}
+	}
+	return out
 }
 
 type CopyBreeder struct {
@@ -37,7 +45,7 @@ func (cp CopyBreeder) Breed(initialPop []string) []string {
 		return nil
 	}
 	pop := make([]string, cp.PopulationSize)
-	for x, y := 0, 0; x < cp.PopulationSize; x++ {
+	for x, y := 0, 0; x < cp.PopulationSize && x < len(initialPop); x++ {
 		y = y % len(initialPop)
 		pop[x] = initialPop[y]
 		y++
@@ -57,10 +65,14 @@ func NewRandomBreeder(popSize int, programLen int, is *govirtual.InstructionSet)
 func (breeder RandomBreeder) Breed([]string) []string {
 	progs := make([]string, breeder.PopulationSize)
 	for x := 0; x < breeder.PopulationSize; x++ {
-		p := ""
+		p := ":start\n"
 
 		for y := 0; y < breeder.ProgramLength; y++ {
-			p += breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt(), rng.SmallInt()}).String() + "\n"
+			i := (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
+			for i.Infix || strings.HasPrefix(i.Name, ":") {
+				i = (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
+			}
+			p += i.Name + " " + ArgsForInstruction(i, []string{":start"}) + "\n"
 		}
 		progs[x] = p
 	}
@@ -111,6 +123,27 @@ func NewMutationBreeder(popSize int, mutationChance float64, is *govirtual.Instr
 	return MutationBreeder{popSize, mutationChance, is}
 }
 
+func ArgsForInstruction(op *govirtual.Instruction, labels []string) string {
+	args := make([]string, len(op.Arguments))
+	for x, arg := range op.Arguments {
+		switch arg.Type {
+		case "ref":
+			args[x] = "#" + strconv.Itoa(rng.SmallInt())
+		case "string":
+			args[x] = labels[rng.Int()%len(labels)]
+		case "int":
+			if rng.Float64() < 0.5 {
+				args[x] = "#" + strconv.Itoa(rng.SmallInt())
+			} else {
+				args[x] = strconv.Itoa(rng.SmallInt())
+			}
+		default:
+			args[x] = "0"
+		}
+	}
+	return strings.Join(args, ",")
+}
+
 func (breeder MutationBreeder) Breed(seeds []string) []string {
 	if len(seeds) == 0 {
 		return nil
@@ -120,68 +153,71 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 	for x := 0; x < breeder.PopulationSize; x++ {
 		y = y % len(seeds)
 		startProg := seeds[y]
-		prog := breeder.CompileProgram(startProg)
-		outProg := govirtual.NewProgram(0)
-		for _, op := range prog.Operations {
+		labels := breeder.CompileProgram(startProg, nil).LabelNames()
+		prog := strings.Split(startProg, "\n")
+		outProg := ""
+		for _, op := range prog {
+			op = strings.TrimSpace(op)
+			if len(op) < 1 {
+				continue
+			}
 			if rng.Float64() < breeder.MutationChance {
 				if rng.Float64() < breeder.MutationChance {
 					for r := rng.Int() % 10; r < 10; r++ {
 						if rng.Float64() < 0.1 {
-							labels := prog.LabelNames()
 							if rng.Float64() < 0.5 && len(labels) > 0 {
-								outProg.Append(breeder.CompileLabel(labels[rng.Int()%len(labels)]))
+								outProg += labels[rng.Int()%len(labels)] + "\n"
 							} else {
-								outProg.Append(breeder.CompileLabel(":" + USDict.RandomWord()))
+								outProg += ":" + USDict.RandomWord() + "\n"
 							}
 						} else {
-							outProg = outProg.Append(breeder.Encode(&govirtual.Memory{rng.Int(), rng.SmallInt(), rng.SmallInt(), rng.SmallInt()}))
+							i := (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
+							for i.Infix || strings.HasPrefix(i.Name, ":") {
+								i = (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
+							}
+							args := ArgsForInstruction(i, labels)
+							outProg += i.Name + " " + args + "\n"
 						}
 					}
 				}
-				if rng.Float64() < 0.1 && outProg.Len() > 0 {
+				if rng.Float64() < 0.1 && len(outProg) > 0 {
 					continue
 				}
 				if rng.Float64() < 0.1 {
-					labels := prog.LabelNames()
 					if rng.Float64() < 0.5 && len(labels) > 0 {
-						outProg.Append(breeder.CompileLabel(labels[rng.Int()%len(labels)]))
+						outProg += labels[rng.Int()%len(labels)] + "\n"
 					} else {
-						outProg.Append(breeder.CompileLabel(":" + USDict.RandomWord()))
+						outProg += ":" + USDict.RandomWord() + "\n"
 					}
 					continue
 				}
-				decode := op.Decode()
-				if rng.Float64() < 0.5 {
-					decode.Set(0, rng.Int())
+				i := (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
+				for i.Infix || strings.HasPrefix(i.Name, ":") {
+					i = (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
 				}
-				if rng.Float64() < 0.5 {
-					decode.Set(1, rng.SmallInt())
-				} else if rng.Float64() < 0.5 {
-					decode.Set(1, decode.GetCardinal(1)+1)
-				} else if rng.Float64() < 0.5 {
-					decode.Set(1, decode.GetCardinal(1)-1)
+				parts := strings.Split(op, " ")
+				if rng.Float64() > 0.5 && strings.HasPrefix(parts[0], ":") {
+					if rng.Float64() > 0.5 && len(labels) > 0 {
+						outProg += labels[rng.Int()%len(labels)] + "\n"
+						continue
+					} else if rng.Float64() > 0.5 {
+						outProg += ":" + USDict.RandomWord() + "\n"
+						continue
+					}
+				} else if rng.Float64() > 0.5 && !strings.HasPrefix(parts[0], ":") {
+					i = (*breeder.InstructionSet).Compile(parts[0]).Instruction
 				}
-				if rng.Float64() < 0.5 {
-					decode.Set(2, rng.SmallInt())
-				} else if rng.Float64() < 0.5 {
-					decode.Set(2, decode.GetCardinal(2)+1)
-				} else if rng.Float64() < 0.5 {
-					decode.Set(2, decode.GetCardinal(2)-1)
+				if strings.HasPrefix(parts[0], ":") {
+					outProg += parts[0]
+				} else {
+					outProg += parts[0] + " " + ArgsForInstruction(i, labels) + "\n"
 				}
-				if rng.Float64() < 0.5 {
-					decode.Set(3, rng.SmallInt())
-				} else if rng.Float64() < 0.5 {
-					decode.Set(3, decode.GetCardinal(3)+1)
-				} else if rng.Float64() < 0.5 {
-					decode.Set(3, decode.GetCardinal(3)-1)
-				}
-				outProg = outProg.Append(breeder.Encode(decode))
 			} else {
-				outProg = outProg.Append(op)
+				outProg += op + "\n"
 			}
 		}
-		out[x] = outProg.Decompile()
 		y++
+		out = append(out, outProg)
 	}
 	return out
 }
