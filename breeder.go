@@ -25,7 +25,7 @@ func (multi MultiBreeder) Breed(seeds []string) []string {
 	}
 	out := make([]string, 0)
 	for _, x := range ret {
-		if(len(strings.TrimSpace(x)) > 0){
+		if len(strings.TrimSpace(x)) > 0 {
 			out = append(out, x)
 		}
 	}
@@ -72,7 +72,7 @@ func (breeder RandomBreeder) Breed([]string) []string {
 			for i.Infix || strings.HasPrefix(i.Name, ":") {
 				i = (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
 			}
-			p += i.Name + " " + ArgsForInstruction(i, []string{":start"}) + "\n"
+			p += i.Name + " " + ArgsForInstruction(i, nil, []string{":start"}) + "\n"
 		}
 		progs[x] = p
 	}
@@ -123,22 +123,58 @@ func NewMutationBreeder(popSize int, mutationChance float64, is *govirtual.Instr
 	return MutationBreeder{popSize, mutationChance, is}
 }
 
-func ArgsForInstruction(op *govirtual.Instruction, labels []string) string {
+func ArgsForInstruction(op *govirtual.Instruction, existing, labels []string) string {
 	args := make([]string, len(op.Arguments))
 	for x, arg := range op.Arguments {
-		switch arg.Type {
-		case "ref":
-			args[x] = "#" + strconv.Itoa(rng.SmallInt())
-		case "string":
-			args[x] = labels[rng.Int()%len(labels)]
-		case "int":
+		if rng.Float64() < 0.5 && len(existing) == len(op.Arguments) && !strings.HasPrefix(existing[x], ":") {
 			if rng.Float64() < 0.5 {
-				args[x] = "#" + strconv.Itoa(rng.SmallInt())
-			} else {
-				args[x] = strconv.Itoa(rng.SmallInt())
+				args[x] = existing[x]
+				continue
 			}
-		default:
-			args[x] = "0"
+			num := existing[x]
+			if strings.HasPrefix(num, "#") {
+				num = num[1:]
+			}
+			n, _ := strconv.Atoi(num)
+			if rng.Float64() > 0.5 {
+				if rng.Float64() > 0.5 {
+					if rng.Float64() > 0.5 {
+						n += rng.Int() % 1000
+					} else {
+						n -= rng.Int() % 1000
+					}
+				} else if rng.Float64() > 0.5 {
+					n += 10
+				} else {
+					n -= 10
+				}
+			} else {
+				if rng.Float64() > 0.5 {
+					n++
+				} else {
+					n--
+				}
+			}
+			if strings.HasPrefix(existing[x], "#") {
+				args[x] = "#" + strconv.Itoa(n)
+			} else {
+				args[x] = strconv.Itoa(n)
+			}
+		} else {
+			switch arg.Type {
+			case "ref":
+				args[x] = "#" + strconv.Itoa(rng.SmallInt())
+			case "string":
+				args[x] = labels[rng.Int()%len(labels)]
+			case "int":
+				if rng.Float64() < 0.5 {
+					args[x] = "#" + strconv.Itoa(rng.SmallInt())
+				} else {
+					args[x] = strconv.Itoa(rng.SmallInt())
+				}
+			default:
+				args[x] = "0"
+			}
 		}
 	}
 	return strings.Join(args, ",")
@@ -168,14 +204,16 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 							if rng.Float64() < 0.5 && len(labels) > 0 {
 								outProg += labels[rng.Int()%len(labels)] + "\n"
 							} else {
-								outProg += ":" + USDict.RandomWord() + "\n"
+								nl := ":" + USDict.RandomWord()
+								labels = append(labels, nl)
+								outProg += nl + "\n"
 							}
 						} else {
 							i := (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
 							for i.Infix || strings.HasPrefix(i.Name, ":") {
 								i = (*breeder.InstructionSet)[rng.Int()%len(*breeder.InstructionSet)]
 							}
-							args := ArgsForInstruction(i, labels)
+							args := ArgsForInstruction(i, nil, labels)
 							outProg += i.Name + " " + args + "\n"
 						}
 					}
@@ -187,7 +225,9 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 					if rng.Float64() < 0.5 && len(labels) > 0 {
 						outProg += labels[rng.Int()%len(labels)] + "\n"
 					} else {
-						outProg += ":" + USDict.RandomWord() + "\n"
+						nl := ":" + USDict.RandomWord()
+						labels = append(labels, nl)
+						outProg += nl + "\n"
 					}
 					continue
 				}
@@ -201,7 +241,9 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 						outProg += labels[rng.Int()%len(labels)] + "\n"
 						continue
 					} else if rng.Float64() > 0.5 {
-						outProg += ":" + USDict.RandomWord() + "\n"
+						nl := ":" + USDict.RandomWord()
+						labels = append(labels, nl)
+						outProg += nl + "\n"
 						continue
 					}
 				} else if rng.Float64() > 0.5 && !strings.HasPrefix(parts[0], ":") {
@@ -210,7 +252,11 @@ func (breeder MutationBreeder) Breed(seeds []string) []string {
 				if strings.HasPrefix(parts[0], ":") {
 					outProg += parts[0]
 				} else {
-					outProg += parts[0] + " " + ArgsForInstruction(i, labels) + "\n"
+					if len(parts) > 1 {
+						outProg += parts[0] + " " + ArgsForInstruction(i, strings.Split(parts[1], ","), labels) + "\n"
+					} else {
+						outProg += parts[0] + " " + ArgsForInstruction(i, nil, labels) + "\n"
+					}
 				}
 			} else {
 				outProg += op + "\n"
