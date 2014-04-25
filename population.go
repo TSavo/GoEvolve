@@ -1,10 +1,15 @@
 package goevolve
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/gob"
 	"fmt"
 	"github.com/TSavo/GoVirtual"
+	"io"
 	"log"
+	"os"
+	"time"
 )
 
 type Population struct {
@@ -21,8 +26,63 @@ type Population struct {
 
 var SolutionCache map[string]*Solution
 
-func init(){
+func init() {
 	SolutionCache = make(map[string]*Solution)
+	go func() {
+		for {
+			time.Sleep(60 * time.Second)
+			fmt.Println("writing solution cache")
+			WriteSolutionCache(EncodeSolutionCache())
+		}
+	}()
+
+	defer recover()
+	cache := ReadSolutionCache()
+	if(cache != nil) {
+		SolutionCache = *DecodeSolutionCache(cache)
+	}
+}
+
+func EncodeSolutionCache() (b *bytes.Buffer) {
+	b = new(bytes.Buffer)
+	e := gob.NewEncoder(b)
+
+	// Encoding the map
+	err := e.Encode(&SolutionCache)
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
+func DecodeSolutionCache(b *bytes.Buffer) *map[string]*Solution {
+	s := make(map[string]*Solution)
+	d := gob.NewDecoder(b)
+
+	// Decoding the serialized data
+	err := d.Decode(&s)
+	if err != nil {
+		return nil
+	}
+	return &s
+}
+
+func WriteSolutionCache(b *bytes.Buffer) {
+	f, er := os.OpenFile("SolutionCache.gob", os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0777  )
+	fmt.Println(er)
+	f.Write(b.Bytes()) // Error handling elided for brevity.
+	f.Close()
+}
+
+func ReadSolutionCache() *bytes.Buffer {
+	buf := bytes.NewBuffer(nil)
+	f, _ := os.Open("SolutionCache.gob") // Error handling elided for brevity.
+	written, err := io.Copy(buf, f)      // Error handling elided for brevity.
+	f.Close()
+	if err == nil && written > 0 {
+		return buf
+	}
+	return nil
 }
 
 type Solution struct {
