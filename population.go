@@ -67,7 +67,7 @@ func DecodeSolutionCache(b *bytes.Buffer) *map[string]*Solution {
 }
 
 func WriteSolutionCache(b *bytes.Buffer) {
-	f, er := os.OpenFile("SolutionCache.gob", os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0777  )
+	f, _ := os.OpenFile("SolutionCache.gob", os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0777  )
 	f.Write(b.Bytes()) // Error handling elided for brevity.
 	f.Close()
 }
