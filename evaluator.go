@@ -1,15 +1,16 @@
 package goevolve
 
 import (
-	"github.com/TSavo/GoVirtual"
+	"github.com/tsavo/GoVirtual"
 )
+
 type Evaluator interface {
 	Evaluate(*govirtual.Processor) int
 }
 
 type MultiEvaluator []*Evaluator
 
-func NewMultiEvaluator(e... *Evaluator) *MultiEvaluator {
+func NewMultiEvaluator(e ...*Evaluator) *MultiEvaluator {
 	m := &MultiEvaluator{}
 	for _, x := range e {
 		m.AddEvaluator(x)
@@ -27,7 +28,7 @@ func (multi *MultiEvaluator) Evaluate(p *govirtual.Processor) int {
 
 func (multi *MultiEvaluator) AddEvaluator(e *Evaluator) *MultiEvaluator {
 	*multi = append(*multi, e)
-	return multi 
+	return multi
 }
 
 type InverseEvaluator struct {
@@ -42,7 +43,7 @@ func (inverse InverseEvaluator) Evaluate(p *govirtual.Processor) int {
 	return (*inverse.Evaluator).Evaluate(p) * -1
 }
 
-type TimeEvaluator struct {}
+type TimeEvaluator struct{}
 
 func NewTimeEvaluator() *TimeEvaluator {
 	return &TimeEvaluator{}
@@ -52,7 +53,7 @@ func (t *TimeEvaluator) Evaluate(p *govirtual.Processor) int {
 	return Now() - p.StartTime
 }
 
-type CostEvaluator struct {}
+type CostEvaluator struct{}
 
 func NewCostEvaluator() *CostEvaluator {
 	return &CostEvaluator{}

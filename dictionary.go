@@ -7,7 +7,7 @@ import (
 
 type Dictionary []string
 
-func readLines(path string) ([]string) {
+func readLines(path string) []string {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil
@@ -28,7 +28,7 @@ func NewDictionary(name string) *Dictionary {
 }
 
 func (dict *Dictionary) RandomWord() string {
-	return (*dict)[rng.Int() % len(*dict)]
+	return (*dict)[rng.Int()%len(*dict)]
 }
 
 var USDict = NewDictionary("US.dic")

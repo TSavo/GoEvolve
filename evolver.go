@@ -2,13 +2,13 @@ package goevolve
 
 import (
 	"bufio"
-	"github.com/TSavo/GoVirtual"
+	"github.com/tsavo/GoVirtual"
+	"log"
 	"os"
+	"os/exec"
 	"runtime"
 	"sort"
 	"time"
-	"os/exec"
-	"log"
 )
 
 type IslandEvolver struct {

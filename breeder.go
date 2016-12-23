@@ -2,7 +2,7 @@ package goevolve
 
 import (
 	//"fmt"
-	"github.com/TSavo/GoVirtual"
+	"github.com/tsavo/GoVirtual"
 	"strconv"
 	"strings"
 )

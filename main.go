@@ -5,8 +5,8 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/TSavo/GoVirtual"
-	"github.com/TSavo/GoEvolve"
+	"github.com/tsavo/GoEvolve"
+	"github.com/tsavo/GoVirtual"
 	"log"
 	"math/rand"
 	"net/http"
@@ -200,7 +200,6 @@ func (eval *FlappyEvaluator) Evaluate(p *govirtual.Processor) int64 {
 type FlappyGenerator struct {
 	InstructionSet *govirtual.InstructionSet
 }
-
 
 type FlappyBreeder struct {
 	PopulationSize int

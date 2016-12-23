@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
-	"github.com/TSavo/GoVirtual"
+	"github.com/tsavo/GoVirtual"
 	"io"
 	"log"
 	"os"
@@ -37,7 +37,7 @@ func init() {
 
 	defer recover()
 	cache := ReadSolutionCache()
-	if(cache != nil) {
+	if cache != nil {
 		SolutionCache = *DecodeSolutionCache(cache)
 	}
 }
@@ -67,7 +67,7 @@ func DecodeSolutionCache(b *bytes.Buffer) *map[string]*Solution {
 }
 
 func WriteSolutionCache(b *bytes.Buffer) {
-	f, _ := os.OpenFile("SolutionCache.gob", os.O_RDWR | os.O_CREATE | os.O_TRUNC, 0777  )
+	f, _ := os.OpenFile("SolutionCache.gob", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 	f.Write(b.Bytes()) // Error handling elided for brevity.
 	f.Close()
 }
